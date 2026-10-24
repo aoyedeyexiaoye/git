@@ -125,8 +125,22 @@ def cmd_sd(cfg: dict, a: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def build_mask(size: tuple[int, int], box: str) -> bytes:
+    """生成蒙版：黑底白块（白色 = 重绘区）。box 格式 x,y,w,h。"""
+    from PIL import Image, ImageDraw  # 延迟导入，doctor 不需要
+
+    x, y, w, h = (int(v) for v in box.split(","))
+    img = Image.new("RGB", size, (0, 0, 0))
+    ImageDraw.Draw(img).rectangle([x, y, x + w, y + h], fill=(255, 255, 255))
+    from io import BytesIO
+
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 def cmd_img(cfg: dict, a: argparse.Namespace) -> int:
-    """img2img：拿一张参考图按 denoising 强度重绘。"""
+    """img2img / inpaint：按 denoising 重绘参考图（可选只重绘 mask 区域）。"""
     import base64
 
     src = Path(a.input)
@@ -146,11 +160,30 @@ def cmd_img(cfg: dict, a: argparse.Namespace) -> int:
         "cfg_scale": a.cfg or preset["cfg_scale"],
         "resize_mode": 0,
     }
+    tag = f"d{a.denoising:.2f}"
+    if a.mask_box:
+        from PIL import Image
+
+        with Image.open(src) as im:
+            size = im.size
+        mask = base64.b64encode(build_mask(size, a.mask_box)).decode()
+        payload.update(
+            {
+                "mask": mask,
+                "inpainting_fill": a.inpaint_fill,
+                "mask_blur": a.mask_blur,
+                "inpaint_full_res": a.inpaint_full_res,
+                "inpaint_full_res_padding": a.inpaint_padding,
+                "inpaint_area": 0,
+            }
+        )
+        tag += f"_mask{a.mask_box.replace(',', '-')}"
+        log.info("inpaint mode: mask_box=%s fill=%d blur=%d", a.mask_box, a.inpaint_fill, a.mask_blur)
     log.info("img2img denoising=%.2f seed=%d", a.denoising, a.seed)
     res = http_json(cfg["sd_api"] + "/sdapi/v1/img2img", payload)
     outdir = Path(a.outdir or cfg["outdir"])
     outdir.mkdir(parents=True, exist_ok=True)
-    path = outdir / f"img_{Path(a.input).stem}_d{a.denoising:.2f}.png"
+    path = outdir / f"img_{src.stem}_{tag}.png"
     path.write_bytes(base64.b64decode(res["images"][0]))
     print(f"[ok] {path}")
     return EXIT_OK
@@ -210,6 +243,12 @@ def build_parser() -> argparse.ArgumentParser:
     img.add_argument("--steps", type=int)
     img.add_argument("--cfg", type=float)
     img.add_argument("--outdir")
+    img.add_argument("--mask-box", dest="mask_box", help="蒙版框 x,y,w,h（给了就是蒙版重绘）")
+    img.add_argument("--inpaint-fill", dest="inpaint_fill", type=int, default=1,
+                     help="0 填充原图 1 保留原图 2 噪声 3 空潜空间")
+    img.add_argument("--mask-blur", dest="mask_blur", type=int, default=4)
+    img.add_argument("--inpaint-full-res", dest="inpaint_full_res", action="store_true", default=True)
+    img.add_argument("--inpaint-padding", dest="inpaint_padding", type=int, default=32)
 
     ff = sub.add_parser("ff", help="ffmpeg 动作")
     ff.add_argument("action", choices=["trim", "speed", "gif", "text"])
