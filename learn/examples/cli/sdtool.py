@@ -125,6 +125,37 @@ def cmd_sd(cfg: dict, a: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def cmd_img(cfg: dict, a: argparse.Namespace) -> int:
+    """img2img：拿一张参考图按 denoising 强度重绘。"""
+    import base64
+
+    src = Path(a.input)
+    if not src.exists():
+        print(f"输入图不存在：{src}")
+        return EXIT_ERR
+    b64 = base64.b64encode(src.read_bytes()).decode()
+    preset = dict(PRESETS[a.preset])
+    payload = {
+        "init_images": [b64],
+        "prompt": a.prompt,
+        "negative_prompt": a.negative,
+        "denoising_strength": a.denoising,
+        "seed": a.seed,
+        "sampler_name": a.sampler or preset["sampler_name"],
+        "steps": a.steps or preset["steps"],
+        "cfg_scale": a.cfg or preset["cfg_scale"],
+        "resize_mode": 0,
+    }
+    log.info("img2img denoising=%.2f seed=%d", a.denoising, a.seed)
+    res = http_json(cfg["sd_api"] + "/sdapi/v1/img2img", payload)
+    outdir = Path(a.outdir or cfg["outdir"])
+    outdir.mkdir(parents=True, exist_ok=True)
+    path = outdir / f"img_{Path(a.input).stem}_d{a.denoising:.2f}.png"
+    path.write_bytes(base64.b64decode(res["images"][0]))
+    print(f"[ok] {path}")
+    return EXIT_OK
+
+
 def cmd_ff(cfg: dict, a: argparse.Namespace) -> int:
     ff = cfg["ffmpeg"]
     if a.action == "trim":
@@ -168,6 +199,18 @@ def build_parser() -> argparse.ArgumentParser:
     sd.add_argument("--cfg", type=float)
     sd.add_argument("--outdir")
 
+    img = sub.add_parser("img", help="img2img：按 denoising 重绘参考图")
+    img.add_argument("-i", "--input", required=True, help="参考图路径")
+    img.add_argument("--prompt", required=True)
+    img.add_argument("--negative", default="lowres, bad anatomy, bad hands, watermark, text")
+    img.add_argument("--denoising", type=float, default=0.45, help="0.3~0.5 保画风，0.7+ 重画")
+    img.add_argument("--preset", choices=list(PRESETS), default="final")
+    img.add_argument("--seed", type=int, default=12345)
+    img.add_argument("--sampler")
+    img.add_argument("--steps", type=int)
+    img.add_argument("--cfg", type=float)
+    img.add_argument("--outdir")
+
     ff = sub.add_parser("ff", help="ffmpeg 动作")
     ff.add_argument("action", choices=["trim", "speed", "gif", "text"])
     ff.add_argument("-i", "--input", required=True)
@@ -192,6 +235,8 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_doctor(cfg)
         if a.cmd == "sd":
             return cmd_sd(cfg, a)
+        if a.cmd == "img":
+            return cmd_img(cfg, a)
         if a.cmd == "ff":
             return cmd_ff(cfg, a)
     except RuntimeError as e:
