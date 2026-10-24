@@ -1,0 +1,25 @@
+{
+  "name": "dsh-hello-plugin",
+  "version": "0.1.0",
+  "description": "示例：最小可用的 DSH 插件（宿主半侧注册一个工具）",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "package.json"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
