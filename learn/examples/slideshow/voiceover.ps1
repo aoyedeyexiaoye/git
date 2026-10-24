@@ -36,7 +36,8 @@ $lines = Get-Content -Path $ScriptFile -Encoding UTF8 |
 
 Write-Host ("共 {0} 句，语音：{1}" -f $lines.Count, $Voice) -ForegroundColor Cyan
 
-$tmp = Join-Path ([IO.Path]::GetTempPath()) ("vo_" + [guid]::NewGuid().ToString('N'))
+# 临时目录放在输出文件旁边（%TEMP% 在部分受限环境会拒写）
+$tmp = Join-Path (Split-Path -Parent ([IO.Path]::GetFullPath($Out))) (".vo_tmp_" + [guid]::NewGuid().ToString('N').Substring(0,8))
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 
 $wavs = @()

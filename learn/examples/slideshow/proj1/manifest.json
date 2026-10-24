@@ -1,0 +1,21 @@
+{
+  "steps": {
+    "video": {
+      "output": "1_video.mp4",
+      "bytes": 934615,
+      "at": "2026-10-24 23:13:31",
+      "images": 9
+    },
+    "captions": {
+      "output": "2_captions.mp4",
+      "bytes": 1123063,
+      "at": "2026-10-24 23:13:32",
+      "captions": 3
+    },
+    "bgm": {
+      "output": "4_final.mp4",
+      "bytes": 1430286,
+      "at": "2026-10-24 23:14:09"
+    }
+  }
+}
