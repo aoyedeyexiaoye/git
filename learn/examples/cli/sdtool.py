@@ -161,6 +161,13 @@ def cmd_img(cfg: dict, a: argparse.Namespace) -> int:
         "resize_mode": 0,
     }
     tag = f"d{a.denoising:.2f}"
+    # 用提示词短哈希做后缀：同一底图 + 同一 denoise 跑不同情绪时不会互相覆盖
+    import hashlib
+
+    phash = hashlib.sha1(a.prompt.encode("utf-8")).hexdigest()[:6]
+    tag += f"_{phash}"
+    if a.tag:
+        tag += f"_{a.tag}"
     if a.mask_box:
         from PIL import Image
 
@@ -249,6 +256,7 @@ def build_parser() -> argparse.ArgumentParser:
     img.add_argument("--mask-blur", dest="mask_blur", type=int, default=4)
     img.add_argument("--inpaint-full-res", dest="inpaint_full_res", action="store_true", default=True)
     img.add_argument("--inpaint-padding", dest="inpaint_padding", type=int, default=32)
+    img.add_argument("--tag", help="文件名附加标签（便于区分同底图的不同实验）")
 
     ff = sub.add_parser("ff", help="ffmpeg 动作")
     ff.add_argument("action", choices=["trim", "speed", "gif", "text"])
