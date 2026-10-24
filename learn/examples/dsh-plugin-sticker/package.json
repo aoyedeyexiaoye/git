@@ -1,0 +1,15 @@
+{
+  "name": "dsh-sticker-pack",
+  "version": "0.1.0",
+  "description": "DSH 插件：一句话出一套表情包（调用本机 SD + ffmpeg 流水线）",
+  "type": "module",
+  "main": "index.js",
+  "files": ["index.js", "cordis.patch.yml", "package.json"],
+  "keywords": ["dsh", "dsh-plugin", "stable-diffusion", "sticker"],
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "peerDependencies": { "@deepseek-ai/cordis": "*" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  }
+}
