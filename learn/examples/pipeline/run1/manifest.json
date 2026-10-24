@@ -1,0 +1,44 @@
+{
+  "items": {
+    "happy": {
+      "image": {
+        "path": "01_happy.png",
+        "bytes": 101517
+      },
+      "video": {
+        "path": "01_happy.mp4",
+        "bytes": 29486
+      }
+    },
+    "deadpan": {
+      "image": {
+        "path": "02_deadpan.png",
+        "bytes": 86679
+      },
+      "video": {
+        "path": "02_deadpan.mp4",
+        "bytes": 25108
+      }
+    },
+    "angry": {
+      "image": {
+        "path": "03_angry.png",
+        "bytes": 90263
+      },
+      "video": {
+        "path": "03_angry.mp4",
+        "bytes": 27335
+      }
+    },
+    "sleepy": {
+      "image": {
+        "path": "04_sleepy.png",
+        "bytes": 93793
+      },
+      "video": {
+        "path": "04_sleepy.mp4",
+        "bytes": 26549
+      }
+    }
+  }
+}
