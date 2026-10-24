@@ -1,0 +1,28 @@
+{
+  "name": "dsh-hello-plugin-client",
+  "version": "0.1.0",
+  "description": "示例：带浏览器半侧的 DSH 插件骨架",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    "./client": "./lib/client.js"
+  },
+  "files": ["index.js", "lib", "cordis.patch.yml"],
+  "scripts": {
+    "build:client": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "react": "^18.2.0"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": ["@deepseek-ai/dsh-client-ui-primitives"]
+    }
+  }
+}
